@@ -12,13 +12,14 @@ const RootNavigator = () => {
 
   useEffect(() => {
     const initialize = async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000)); // wait for splash
       const token = await AsyncStorage.getItem('USER_TOKEN');
       setIsLoggedIn(!!token);
-      setShowSplash(false);
+      setShowSplash(false); // ✅ FIXED here
     };
     initialize();
   }, []);
+  
 
   if (showSplash) return <SplashScreen />;
 
