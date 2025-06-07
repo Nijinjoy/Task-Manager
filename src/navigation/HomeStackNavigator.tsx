@@ -12,18 +12,9 @@ const HomeStackNavigator = () => {
 
   return (
     <Stack.Navigator
-      screenOptions={{
-        headerTitle: '',  
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())} style={{ marginLeft: 10 }}>
-            <MaterialIcons name="menu" size={28} />
-          </TouchableOpacity>
-        ),
-      }}
+    screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen name="Home" component={HomeScreen}   screenOptions={{
-    headerShown: false, 
-  }} />
+      <Stack.Screen name="Home" component={HomeScreen}  screenOptions={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

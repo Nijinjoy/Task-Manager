@@ -32,7 +32,7 @@ const TabNavigator = () => (
         component={HomeStackNavigator}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkmark-done-outline" size={size} color={color} />
+            <Ionicons name="cube-outline" size={size} color={color} />
           ),
         }}
       />

@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import HeaderComponent from '../../components/HeaderComponent';
+import { Ionicons } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 type Task = {
   id: string;
@@ -20,27 +23,12 @@ type Task = {
   description?: string;
 };
 
-const initialTasks: Task[] = [
-  { id: '1', title: 'Finish React Native project', completed: false, description: 'Complete the React Native project by the end of the week.' },
-  { id: '2', title: 'Prepare meeting notes', completed: true, description: 'Summarize key points for Monday’s meeting.' },
-  { id: '3', title: 'Buy groceries', completed: false, description: 'Milk, Bread, Eggs, and Vegetables.' },
-  { id: '4', title: 'Call client', completed: true, description: 'Discuss project requirements and timeline.' },
-];
-
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [fabScale] = useState(new Animated.Value(1));
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-
-  const toggleTaskCompleted = (id: string) => {
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
 
   const deleteTask = (id: string) => {
     Alert.alert('Delete Task', 'Are you sure you want to delete this task?', [
@@ -61,21 +49,21 @@ const HomeScreen: React.FC = () => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
+      setTasks([]);
       setRefreshing(false);
     }, 1500);
   }, []);
 
-  // Animated Task Item Component
   const AnimatedTaskItem: React.FC<{ item: Task; isExpanded: boolean; onPress: () => void }> = ({
     item,
     isExpanded,
     onPress,
   }) => {
-    const [height] = React.useState(new Animated.Value(60)); // initial height (collapsed)
+    const [height] = React.useState(new Animated.Value(60));
 
     React.useEffect(() => {
       Animated.timing(height, {
-        toValue: isExpanded ? 140 : 60, // height for expanded/collapsed
+        toValue: isExpanded ? 140 : 60,
         duration: 300,
         useNativeDriver: false,
       }).start();
@@ -147,163 +135,160 @@ const HomeScreen: React.FC = () => {
     label: string;
     color?: string;
     onPress?: () => void;
-  }> = ({ number, label, color = '#333', onPress }) => {
-    const [pressed, setPressed] = useState(false);
-
+    fullWidth?: boolean;
+  }> = ({ number, label, color = '#333', onPress, fullWidth = false }) => {
     return (
       <TouchableOpacity
         style={[
           styles.summaryBox,
-          pressed && { backgroundColor: '#d0f0d0' },
+          fullWidth && { width: '100%' },
           { borderColor: color, borderWidth: 1 },
         ]}
         activeOpacity={0.8}
-        onPress={() => {
-          setPressed(true);
-          onPress && onPress();
-          setTimeout(() => setPressed(false), 200);
-        }}
+        onPress={onPress}
       >
         <Text style={[styles.summaryNumber, { color }]}>{number}</Text>
         <Text style={[styles.summaryLabel, { color }]}>{label}</Text>
       </TouchableOpacity>
     );
-  };
+  };  
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Welcome Message */}
-      <Text style={styles.welcome}>Welcome back!</Text>
+<SafeAreaView style={styles.container}>
+  <HeaderComponent
+    title="My Tasks"
+    leftIcon={<Icon name="menu" size={24} color="#000" />}
+    rightIcon={<Icon name="log-out-outline" size={24} color="#000" />}
+    onLeftPress={() => navigation.openDrawer()}
+    onRightPress={() => console.log('Logout')}
+  />
 
-      {/* Task Summary */}
-      <View style={styles.summaryContainer}>
-        <SummaryBox number={totalTasks} label="Total Tasks" />
-        <SummaryBox
-          number={completedTasks}
-          label="Completed"
-          color="#4CAF50"
-          onPress={() => Alert.alert('Completed Tasks', 'You completed tasks!')}
-        />
-        <SummaryBox
-          number={pendingTasks}
-          label="Pending"
-          color="#F44336"
-          onPress={() => Alert.alert('Pending Tasks', 'You have pending tasks!')}
-        />
+  <View style={styles.contentContainer}>
+    <View style={styles.summaryContainer}>
+      <View style={styles.summaryRow}>
+        <SummaryBox number={totalTasks} label="Total" color="#6c5ce7" />
+        <SummaryBox number={completedTasks} label="Completed" color="#00b894" />
       </View>
+      <SummaryBox number={pendingTasks} label="Pending" color="#fdcb6e" fullWidth />
+    </View>
 
-      {/* Tasks List */}
-      <Text style={styles.sectionTitle}>Your Tasks</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={item => item.id}
-        renderItem={renderTaskItem}
-        style={styles.taskList}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={
-          <Text style={{ textAlign: 'center', marginTop: 40, color: '#999' }}>
-            No tasks available.
-          </Text>
-        }
-      />
+    {tasks.length > 0 && (
+      <>
+        <Text style={styles.header}>Today</Text>
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTaskItem}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      </>
+    )}
+  </View>
 
-      {/* Floating Add Task Button */}
-      <Animated.View style={[styles.fab, { transform: [{ scale: fabScale }] }]}>
-        <TouchableOpacity onPress={pressFab} activeOpacity={0.7}>
-          <MaterialIcons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      </Animated.View>
-    </SafeAreaView>
+  <Animated.View style={[styles.fab, { transform: [{ scale: fabScale }] }]}>
+    <TouchableOpacity onPress={pressFab}>
+      <MaterialIcons name="add" size={28} color="#fff" />
+    </TouchableOpacity>
+  </Animated.View>
+</SafeAreaView>
+
   );
 };
-
-export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
+    backgroundColor: 'white',
   },
-  welcome: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 24,
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  summaryBox: {
+  contentContainer: {
+    paddingHorizontal: 16, 
     flex: 1,
-    backgroundColor: '#F0F0F0',
-    marginHorizontal: 6,
-    paddingVertical: 20,
-    borderRadius: 12,
-    alignItems: 'center',
   },
-  summaryNumber: {
-    fontSize: 22,
-    fontWeight: '700',
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
     color: '#333',
   },
+  summaryContainer: {
+    marginBottom: 24,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  summaryBox: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '48%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginTop: 5,
+  },
+  summaryNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
   summaryLabel: {
-    marginTop: 4,
     fontSize: 14,
     color: '#666',
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#333',
-  },
-  taskList: {
-    flexGrow: 0,
-  },
   taskItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    paddingHorizontal: 14,
-    marginBottom: 10,
-    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     overflow: 'hidden',
   },
   taskCompleted: {
-    backgroundColor: '#E0F7E9',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
   },
   taskTitle: {
     fontSize: 16,
+    fontWeight: '500',
     color: '#333',
   },
   completedText: {
     textDecorationLine: 'line-through',
-    color: '#777',
+    color: '#999',
   },
   taskDescription: {
-    marginTop: 6,
     fontSize: 14,
-    color: '#555',
+    color: '#666',
+    marginTop: 8,
+    lineHeight: 20,
   },
   fab: {
     position: 'absolute',
-    bottom: 30,
-    right: 20,
-    backgroundColor: '#4CAF50',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
+    right: 24,
+    bottom: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#6c5ce7',
     alignItems: 'center',
-    elevation: 5,
+    justifyContent: 'center',
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 6,
   },
 });
+
+export default HomeScreen;
