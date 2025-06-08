@@ -7,16 +7,11 @@ const Drawer = createDrawerNavigator();
 
 const AppDrawerNavigator = () => (
   <Drawer.Navigator
+    drawerContent={props => <DrawerScreen {...props} />}
     screenOptions={{ headerShown: false }}
-    drawerContent={(props) => <DrawerScreen {...props} />}
   >
-    <Drawer.Screen
-      name="Root"
-      component={TabNavigator}
-      options={{ drawerItemStyle: { height: 0 } }}
-    />
+    <Drawer.Screen name="Tabs" component={TabNavigator} />
   </Drawer.Navigator>
 );
 
 export default AppDrawerNavigator;
-

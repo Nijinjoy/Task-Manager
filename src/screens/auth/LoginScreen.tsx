@@ -13,7 +13,6 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [email, setEmail] = useState<string>('');
@@ -28,7 +27,6 @@ const LoginScreen: React.FC = () => {
     console.log('Logging in with:', { email, password });
     await AsyncStorage.setItem('USER_TOKEN', 'dummy_token');
   };
-  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -79,6 +77,14 @@ const LoginScreen: React.FC = () => {
       <TouchableOpacity>
         <Text style={styles.forgotText}>Forgot Password?</Text>
       </TouchableOpacity>
+
+      {/* Sign Up Link */}
+      <View style={styles.bottomTextContainer}>
+        <Text style={styles.bottomText}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={[styles.bottomText, styles.signUpText]}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -139,5 +145,18 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     textAlign: 'center',
     marginTop: 14,
+  },
+  bottomTextContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 30,
+  },
+  bottomText: {
+    fontSize: 15,
+    color: '#444',
+  },
+  signUpText: {
+    color: '#4CAF50',
+    fontWeight: '600',
   },
 });

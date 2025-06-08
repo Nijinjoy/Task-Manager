@@ -12,15 +12,16 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
-  interpolate,
-  Extrapolate,
-  runOnJS,
 } from 'react-native-reanimated';
 import { logo } from '../assets/images';
 
 const appName = 'Schedura';
 
-const SplashScreen: React.FC = () => {
+interface SplashScreenProps {
+  navigation: any;
+}
+
+const SplashScreen: React.FC<SplashScreenProps> = ({ navigation }) => {
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(0.5);
 
@@ -57,7 +58,20 @@ const SplashScreen: React.FC = () => {
         }, index * 80);
       });
     }, 400);
-  }, []);
+
+    const totalAnimationTime =
+      400 +
+      appName.length * 80 + 
+      400 + 
+      500;
+
+    const timer = setTimeout(() => {
+      // Navigate to Register screen inside Auth stack
+      navigation.replace('Auth', { screen: 'Register' });
+    }, totalAnimationTime);
+
+    return () => clearTimeout(timer);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
