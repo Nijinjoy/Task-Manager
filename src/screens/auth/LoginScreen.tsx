@@ -2,89 +2,141 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import LottieView from 'lottie-react-native';
+import InputComponent from '../../components/InputComponent';
+import { loginSchema } from '../../validations/authValidation';
+import { login } from '../../assets/animations';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
+
+const COLORS = {
+  primary: '#4CAF50',
+  error: 'red',
+  textDark: '#333',
+  textLight: '#666',
+  textDefault: '#444',
+  background: '#fff',
+};
+
+const FONT_SIZES = {
+  title: 26,
+  subtitle: 16,
+  buttonText: 16,
+  bottomText: 15,
+  errorText: 12,
+};
+
+type FormData = {
+  email: string;
+  password: string;
+};
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [secureText, setSecureText] = useState<boolean>(true);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
-      return;
+  const [secureText, setSecureText] = useState(true);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
+
+  const handleLogin = async (data: FormData) => {
+    try {
+      console.log('Logging in with:', data);
+      await AsyncStorage.setItem('USER_TOKEN', 'dummy_token');
+      Alert.alert('Success', 'Logged in successfully');
+      // navigation.navigate('Home');
+    } catch (error) {
+      Alert.alert('Error', 'Login failed. Please try again.');
     }
-    console.log('Logging in with:', { email, password });
-    await AsyncStorage.setItem('USER_TOKEN', 'dummy_token');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Welcome Back 👋</Text>
-      <Text style={styles.subtitle}>Login to your account</Text>
-
-      {/* Email Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="email" size={20} color="#999" style={styles.icon} />
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor="#999"
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
-
-      {/* Password Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="lock" size={20} color="#999" style={styles.icon} />
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#999"
-          style={styles.input}
-          secureTextEntry={secureText}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity onPress={() => setSecureText(!secureText)}>
-          <Icon
-            name={secureText ? 'visibility-off' : 'visibility'}
-            size={20}
-            color="#999"
-            style={styles.icon}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 30 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <LottieView source={login} autoPlay loop style={styles.lottie} />
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <InputComponent
+                label="Email"
+                placeholder="Enter your email"
+                value={value}
+                onChangeText={onChange}
+                keyboardType="email-address"
+                iconName="email"
+                error={errors.email?.message}
+              />
+            )}
           />
-        </TouchableOpacity>
-      </View>
 
-      {/* Login Button */}
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Log In</Text>
-      </TouchableOpacity>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <InputComponent
+                label="Password"
+                placeholder="Enter your password"
+                value={value}
+                onChangeText={onChange}
+                secureTextEntry={secureText}
+                iconName="lock"
+                error={errors.password?.message}
+              />
+            )}
+          />
+<View style={styles.forgotPasswordContainer}>
+  <TouchableOpacity onPress={() => Alert.alert('Forgot Password pressed')}>
+    <Text style={styles.forgotText}>Forgot Password?</Text>
+  </TouchableOpacity>
+</View>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit(handleLogin)}>
+            <Text style={styles.buttonText}>Log In</Text>
+          </TouchableOpacity>
 
-      {/* Forgot Password */}
-      <TouchableOpacity>
-        <Text style={styles.forgotText}>Forgot Password?</Text>
-      </TouchableOpacity>
-
-      {/* Sign Up Link */}
-      <View style={styles.bottomTextContainer}>
-        <Text style={styles.bottomText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={[styles.bottomText, styles.signUpText]}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={styles.googleButton} onPress={() => Alert.alert('Google Login')}>
+  <View style={styles.googleContent}>
+    <Icon name="google" size={20} color="#DB4437" style={styles.googleIcon} />
+    <Text style={styles.googleText}>Continue with Google</Text>
+  </View>
+</TouchableOpacity>
+          <View style={styles.bottomTextContainer}>
+            <Text style={styles.bottomText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={[styles.bottomText, styles.signUpText]}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -94,57 +146,34 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 12,
-  },
-  icon: {
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    height: 48,
-    fontSize: 16,
-    color: '#000',
+  toggleText: {
+    textAlign: 'right',
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: COLORS.background,
+    fontSize: FONT_SIZES.buttonText,
     fontWeight: '600',
   },
   forgotText: {
-    color: '#4CAF50',
+    color: COLORS.primary,
     textAlign: 'center',
-    marginTop: 14,
+    // marginTop: 14,
   },
   bottomTextContainer: {
     flexDirection: 'row',
@@ -152,11 +181,51 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   bottomText: {
-    fontSize: 15,
-    color: '#444',
+    fontSize: FONT_SIZES.bottomText,
+    color: COLORS.textDefault,
   },
   signUpText: {
-    color: '#4CAF50',
+    color: COLORS.primary,
     fontWeight: '600',
   },
+  lottie: {
+    width: 300,
+    height: 300,
+    alignSelf: 'center',
+    marginBottom: -10,
+  },
+  googleButton: {
+    marginTop: 20,
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+  },
+  googleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  googleIcon: {
+    marginRight: 12,
+  },
+  googleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginTop: 4, 
+    marginBottom: 8, 
+  }, 
 });
